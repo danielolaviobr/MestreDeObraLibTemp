@@ -16,12 +16,13 @@ class RegistrationController extends GetxController {
   FocusNode passwordFocus;
   FocusNode passwordRepeatFocus;
   FocusScopeNode focus = FocusScopeNode();
-  MaskTextInputFormatter maskFormatter = MaskTextInputFormatter(
-      mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
   String _userEmail;
   String _userPassword;
   String _userPasswordRepeat;
   String _userPhone;
+  bool _isLoading = false;
+  MaskTextInputFormatter maskFormatter = MaskTextInputFormatter(
+      mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
 
   /// Switches over the possible focus states on the textinputfields
   void focusState(FocusState focusState) {
@@ -70,6 +71,7 @@ class RegistrationController extends GetxController {
     if (_checkEmail(_userEmail) &&
         _checkPasswords(_userPassword, _userPasswordRepeat) &&
         _checkPhone(_userPhone)) {
+      _toggleLoadingSignUp(true);
       if (await createUser()) {
         String userID = await _auth.currentUserID();
         print(userID);
@@ -77,10 +79,15 @@ class RegistrationController extends GetxController {
           if (doc.exists) {
             print(doc);
             if (doc.data()['UID'] == userID) {
-              _toggleLoadingSignUp(true);
               await addUserPhoneNumber(maskFormatter.getUnmaskedText(), userID);
-              _toggleLoadingSignUp(false);
+              if (_isLoading) {
+                _toggleLoadingSignUp(false);
+              }
               Get.offNamed(HomeScreen.id);
+            }
+          } else {
+            if (_isLoading) {
+              _toggleLoadingSignUp(false);
             }
           }
         });
@@ -98,9 +105,9 @@ class RegistrationController extends GetxController {
   }
 
   /// Validates if the provided phone number is the correct length - (00) 00000 0000
-  bool _checkPhone(phone) {
+  bool _checkPhone(String phone) {
     // Todo fazer caso para telefones sem o 9 no início, ver mask
-    if (phone.length != 15) {
+    if (phone != null && phone.length != 15) {
       Get.snackbar('Numero de telefone inválido',
           'Favor inserir o telegone com o DDD e com dígito 9 na frente');
       return false;
@@ -110,7 +117,7 @@ class RegistrationController extends GetxController {
 
   /// Validates if the email provided is valid
   bool _checkEmail(String email) {
-    if (email.isEmail) {
+    if (email != null && email.isEmail) {
       return true;
     }
     Get.snackbar('Email invalido', 'Favor indicar um email valido');
@@ -119,7 +126,7 @@ class RegistrationController extends GetxController {
 
   /// Validates if the provided passwords are equal
   bool _checkPasswords(String password, String passwordRepeat) {
-    if (password != passwordRepeat) {
+    if (password != null && passwordRepeat != null && password != passwordRepeat) {
       Get.snackbar(
           'Senha invalida', 'As senhas devem informadas devem ser iguais');
       return false;
@@ -140,8 +147,9 @@ class RegistrationController extends GetxController {
   }
 
   /// Toggles the loading indicator to display waiting for the registries to be created on the database
-  void _toggleLoadingSignUp(bool isLoading) {
-    if (isLoading) {
+  void _toggleLoadingSignUp(bool shouldLoad) {
+    if (shouldLoad) {
+      _isLoading = true;
       Get.dialog(
         Center(
           child: SizedBox(
@@ -156,6 +164,7 @@ class RegistrationController extends GetxController {
         barrierDismissible: false,
       );
     } else {
+      _isLoading = false;
       if (Get.isDialogOpen) {
         Get.back(closeOverlays: true);
       }
@@ -169,6 +178,7 @@ class RegistrationController extends GetxController {
     phoneFocus = FocusNode();
     passwordFocus = FocusNode();
     passwordRepeatFocus = FocusNode();
+
     super.onInit();
   }
 

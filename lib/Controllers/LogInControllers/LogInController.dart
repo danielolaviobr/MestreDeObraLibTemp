@@ -1,4 +1,3 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
@@ -37,7 +36,9 @@ class LogInController extends GetxController {
 
   /// Sign in the user and push to the home screen
   void signInUserAndPushToHome() async {
-    if (await _auth.signInUser(_email.value.trim(), _password.value)) {
+    if (_email.value.trim() != null &&
+        _password.value != null &&
+        await _auth.signInUser(_email.value.trim(), _password.value)) {
       Get.offAllNamed(HomeScreen.id);
     } else {
       _loginErrorTitleAndMessage();
@@ -51,8 +52,7 @@ class LogInController extends GetxController {
       Get.offAllNamed('/home');
     } else {
       _loginErrorTitleAndMessage();
-      Get.snackbar(
-          _title ?? 'Erro', _message ?? 'Ocorreu um erro desconhecido');
+      Get.snackbar(_title ?? 'Erro', _message ?? 'Ocorreu um erro inesperado');
     }
   }
 
@@ -88,8 +88,6 @@ class LogInController extends GetxController {
         _message = 'Favor tentar novamente';
     }
   }
-
-
 
   @override
   void onInit() {

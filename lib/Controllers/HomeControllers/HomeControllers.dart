@@ -263,10 +263,12 @@ class HomeController extends GetxController with TickerCreator {
 
   void signOut() async {
     if (await _auth.isLoggedIn()) {
-      _auth.signOutUser();
-      Get.offAndToNamed(LogInScreen.id);
-    } else {
-      Get.snackbar('Ocorreu um erro inesperado!', _auth.authErrorCode);
+      try {
+        _auth.signOutUser();
+        Get.offAndToNamed(LogInScreen.id);
+      } catch (e) {
+        Get.snackbar('Ocorreu um erro inesperado!', _auth.authErrorCode);
+      }
     }
   }
 
